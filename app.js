@@ -60,6 +60,23 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+// Añadir token de acceso (se puede sobreescribir con la variable de entorno API_TOKEN)
+const API_TOKEN = process.env.API_TOKEN || 'clave...teki_token_12345';
+
+// Middleware para validar Bearer token en Authorization (permitir preflight OPTIONS)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') return next();
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token faltante' });
+  }
+  const token = auth.slice(7);
+  if (token !== API_TOKEN) {
+    return res.status(403).json({ error: 'Token inválido' });
+  }
+  next();
+});
+
 // Importar rutas - Ahora pasamos db y sin transporter fijo
 const correosRoutes = require('./correos')(db);
 const listasRoutes = require('./listas')(db);
